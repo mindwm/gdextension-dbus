@@ -194,3 +194,6 @@ godot.creator.*
 compile_commands.json
 
 dist
+
+# Nix specific
+result

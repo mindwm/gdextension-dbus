@@ -1,13 +1,71 @@
 #!/usr/bin/env python
-from SCons import __version__ as scons_raw_version
 import os
 import sys
 
-ext_name = "dbus"
+env = Environment(tools=["default"], PLATFORM="", PKG_CONFIG_PATH=os.environ.get("PKG_CONFIG_PATH_FOR_TARGET"))
+env.PrependENVPath("PATH", os.getenv("PATH"))
+profile = ARGUMENTS.get("profile", "")
+scons_cache_path = os.environ.get("SCONS_CACHE")
+env["platform"] = ARGUMENTS.get('platform')
+env["target"] = ARGUMENTS.get("target")
+env["arch"] = "x86_64"
+if env["target"].endswith("_debug"):
+  env["mode"] = "debug"
+  env["debug_symbols"] = True
+  env.dev_build = True
+  env["optimize"] = "debug"
+else:
+  env["mode"] = "release"
+  env["debug_symbols"] = False
+  env.dev_build = False
+  env["optimize"] = "speed"
 
-env = SConscript("godot-cpp/SConstruct")
+env.use_hot_reload = True
+env["suffix"] = ".{}.{}.{}".format(
+  env["platform"],
+  env["target"],
+  env["arch"]
+  )
 
-# For the reference:
+env.Append(CXXFLAGS=["-std=c++17"])
+env.Append(CXXFLAGS=["-fno-exceptions"])
+env.Append(CCFLAGS=["-fvisibility=hidden"])
+env.Append(LINKFLAGS=["-fvisibility=hidden"])
+
+if env["debug_symbols"]:
+    env.Append(CCFLAGS=["-gdwarf-4"])
+    if env.dev_build:
+        env.Append(CCFLAGS=["-g3"])
+    else:
+        env.Append(CCFLAGS=["-g2"])
+else:
+    env.Append(LINKFLAGS=["-s"])
+
+if env["optimize"] == "speed":
+    env.Append(CCFLAGS=["-O3"])
+elif env["optimize"] == "speed_trace":
+    env.Append(CCFLAGS=["-O2"])
+elif env["optimize"] == "size":
+    env.Append(CCFLAGS=["-Os"])
+elif env["optimize"] == "debug":
+    env.Append(CCFLAGS=["-Og"])
+elif env["optimize"] == "none":
+    env.Append(CCFLAGS=["-O0"])
+
+if env.use_hot_reload:
+    env.Append(CXXFLAGS=["-fno-gnu-unique"])
+
+env.Append(CCFLAGS=["-fPIC", "-Wwrite-strings"])
+env.Append(LINKFLAGS=["-Wl,-R,'$$ORIGIN'"])
+env.Append(LINKFLAGS=["-Lgodot-cpp/bin/"])
+
+if env["arch"] == "x86_64":
+    env.Append(CCFLAGS=["-m64", "-march=x86-64"])
+    env.Append(LINKFLAGS=["-m64", "-march=x86-64"])
+
+env.Append(CPPDEFINES=["LINUX_ENABLED", "UNIX_ENABLED"])
+
+# For reference:
 # - CCFLAGS are compilation flags shared between C and C++
 # - CFLAGS are for C-specific compilation flags
 # - CXXFLAGS are for C++-specific compilation flags
@@ -16,39 +74,20 @@ env = SConscript("godot-cpp/SConstruct")
 # - LINKFLAGS are for linking flags
 
 # tweak this if you want to use different folders, or more folders, to store your source code in.
-env.Append(CPPPATH=["src/"])
+env["ENV"] = os.environ
+env.Append(CPPPATH=["src/", "godot-cpp/include/", "godot-cpp/gen/include/", "godot-cpp/gdextension/" ])
+env.ParseConfig("pkg-config dbus-1 --cflags --libs")
+env.Append(LIBS=
+    [ "godot-cpp.linux.template_{}.x86_64.a".format(env["mode"])
+    ])
 sources = Glob("src/*.cpp")
 
-# Include dependency libraries for dbus
-env.Append(LIBS=["dbus-1"])
-env.Append(
-    CXXFLAGS=[
-        "-I/usr/include/dbus-1.0",
-        "-I/usr/lib/dbus-1.0/include",
-        "-I/usr/lib/x86_64-linux-gnu/dbus-1.0/include",
-    ]
-)
-
-# Generating the compilation DB (`compile_commands.json`) requires SCons 4.0.0 or later.
-
-scons_ver = env._get_major_minor_revision(scons_raw_version)
-if scons_ver < (4, 0, 0):
-    print(
-        "The `compiledb=yes` option requires SCons 4.0 or later, but your version is %s."
-        % scons_raw_version
+if env["platform"] == "linux":
+    library = env.SharedLibrary(
+        "addons/dbus/bin/libdbusg{}{}".format(env["suffix"], env["SHLIBSUFFIX"]),
+        source=sources,
     )
-    Exit(255)
-
-env.Tool("compilation_db")
-env.Alias("compiledb", env.CompilationDatabase())
-
-
-# Build the shared library
-library = env.SharedLibrary(
-    "addons/{}/bin/lib{}{}{}".format(
-        ext_name, ext_name, env["suffix"], env["SHLIBSUFFIX"]
-    ),
-    source=sources,
-)
+else:
+    library = None
 
 Default(library)
