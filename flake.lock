@@ -42,11 +42,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1719325927,
-        "narHash": "sha256-0xGFpVfJAsJBcdOzj2dJKdaZikq0n0x0jFnsC+b48i0=",
+        "lastModified": 1719385729,
+        "narHash": "sha256-Ch0pFpFZe4+qGEUG5znuxDp12RLGhk3uw6Jtobr85UY=",
         "owner": "omgbebebe",
         "repo": "godot-cpp",
-        "rev": "ec4b0ef69dfa7da740e7fd5d034106de31f71eb3",
+        "rev": "4682cc1de80fdb4ee394c068a32b9c10518b3b03",
         "type": "github"
       },
       "original": {

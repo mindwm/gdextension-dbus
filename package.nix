@@ -30,8 +30,9 @@ stdenv.mkDerivation {
   outputs = [ "out" ];
 
   configurePhase = ''
-    cp -av ${godot-cpp} ./godot-cpp
+    cp -rv ${godot-cpp} ./godot-cpp
   '';
+
   installPhase = ''
     mkdir -p "$out/bin"
     cp addons/dbus/bin/*.so $out/bin/
