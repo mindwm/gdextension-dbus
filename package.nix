@@ -17,7 +17,7 @@ stdenv.mkDerivation {
   name = "godot-extension-dbus";
   src = ./.;
 
-  nativeBuildInputs = with pkgs; [ scons pkg-config ];
+  nativeBuildInputs = with pkgs; [ scons pkg-config makeWrapper ];
   buildInputs = with pkgs; [ dbus godot-cpp ];
   enableParallelBuilding = true;
   BUILD_NAME = "nix-flake";
@@ -30,8 +30,8 @@ stdenv.mkDerivation {
   outputs = [ "out" ];
 
   preBuild = ''
-    cp -av "${godot-cpp}" ./godot-cpp.tmp
-    mv ./godot-cpp.tmp ./godot-cpp
+    substituteInPlace SConstruct \
+    --replace-fail 'godot-cpp/SConstruct' '${godot-cpp}/SConstruct'
   '';
 
   installPhase = ''
