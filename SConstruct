@@ -10,7 +10,7 @@ sources = Glob("src/*.cpp")
 
 if env["platform"] == "linux":
     library = env.SharedLibrary(
-        "addons/dbus/bin/libdbusg{}{}".format(env["suffix"], env["SHLIBSUFFIX"]),
+        "addons/dbus/bin/libdbus{}{}".format(env["suffix"], env["SHLIBSUFFIX"]),
         source=sources,
     )
 else:
