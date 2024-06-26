@@ -30,7 +30,8 @@ stdenv.mkDerivation {
   outputs = [ "out" ];
 
   preBuild = ''
-    cp -av "${godot-cpp}" ./godot-cpp
+    cp -av "${godot-cpp}" ./godot-cpp.tmp
+    mv ./godot-cpp.tmp ./godot-cpp
   '';
 
   installPhase = ''
