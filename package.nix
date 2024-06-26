@@ -18,7 +18,7 @@ stdenv.mkDerivation {
   src = ./.;
 
   nativeBuildInputs = with pkgs; [ scons pkg-config ];
-  buildInputs = with pkgs; [ dbus ];
+  buildInputs = with pkgs; [ dbus godot-cpp ];
   enableParallelBuilding = true;
   BUILD_NAME = "nix-flake";
 
@@ -29,8 +29,8 @@ stdenv.mkDerivation {
 
   outputs = [ "out" ];
 
-  configurePhase = ''
-    cp -rv ${godot-cpp} ./godot-cpp
+  preBuild = ''
+    cp -av "${godot-cpp}" ./godot-cpp
   '';
 
   installPhase = ''
